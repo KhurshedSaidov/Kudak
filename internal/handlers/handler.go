@@ -45,6 +45,7 @@ func (h *Handler) SignUpHandler(w http.ResponseWriter, r *http.Request) {
 	_, err := h.Service.Authenticiate(user.Username, user.Password)
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
+
 		return
 	}
 
