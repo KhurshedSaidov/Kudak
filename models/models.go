@@ -6,6 +6,39 @@ type User struct {
 	gorm.Model
 	Username string `gorm:"unique"`
 	Password string `json:"password"`
+	Result   bool   `json:"result"`
+}
+
+type Kindergarten struct {
+	gorm.Model
+	Name        string                `json:"name"`
+	Inn         int                   `json:"inn"`
+	Address     string                `json:"address"`
+	Number      int                   `json:"number"`
+	Picture     []KindergartenPicture `json:"pictures" gorm:"foreignKey:KindergartenID"`
+	Description string                `json:"description"`
+}
+
+type KindergartenPicture struct {
+	gorm.Model
+	KindergartenID uint   `json:"kindergarten_id"`
+	PicturePath    string `json:"picture_path"`
+}
+
+type EducationMinistry struct {
+	gorm.Model
+	Name        string `json:"name"`
+	Password    string `json:"-"`
+	Inn         int    `json:"inn"`
+	PhoneNumber int    `json:"phone_number"`
+}
+
+type MainDepartment struct {
+	gorm.Model
+	Name        string `json:"name"`
+	Password    string `json:"-"`
+	Inn         int    `json:"inn"`
+	PhoneNumber int    `json:"phone_number"`
 }
 
 type Server struct {

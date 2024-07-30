@@ -2,6 +2,7 @@ package service
 
 import (
 	"Kudak/internal/repository"
+	"Kudak/models"
 	"errors"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -44,4 +45,66 @@ func (s *Service) Authenticiate(username, password string) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func (s *Service) CreateKindergarten(kindergarten *models.Kindergarten) error {
+	return s.Repository.AddKindergarten(kindergarten)
+}
+
+func (s *Service) GetAllKindergartens() (models.Kindergarten, error) {
+	return s.Repository.GetAllKindergartens()
+}
+
+func (s *Service) GetKindergartenByID(id uint) (models.Kindergarten, error) {
+	return s.Repository.GetKindergartenByID(id)
+}
+
+func (s *Service) CreateEducationMinistry(em *models.EducationMinistry) error {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(em.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+	em.Password = string(hashedPassword)
+	return s.Repository.CreateEducationMinistry(em)
+}
+
+func (s *Service) GetAllEducationMinistries() ([]models.EducationMinistry, error) {
+	return s.Repository.GetAllEducationMinistries()
+}
+
+func (s *Service) GetEducationMinistryByID(id uint) (models.EducationMinistry, error) {
+	return s.Repository.GetEducationMinistryByID(id)
+}
+
+func (s *Service) UpdateEducationMinistry(em *models.EducationMinistry) error {
+	return s.Repository.UpdateEducationMinistry(em)
+}
+
+func (s *Service) DeleteEducationMinistry(id uint) error {
+	return s.Repository.DeleteEducationMinistry(id)
+}
+
+func (s *Service) CreateMainDepartment(md *models.MainDepartment) error {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(md.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+	md.Password = string(hashedPassword)
+	return s.Repository.CreateMainDepartment(md)
+}
+
+func (s *Service) GetAllMainDepartments() ([]models.MainDepartment, error) {
+	return s.Repository.GetAllMainDepartments()
+}
+
+func (s *Service) GetMainDepartmentByID(id uint) (models.MainDepartment, error) {
+	return s.Repository.GetMainDepartmentByID(id)
+}
+
+func (s *Service) UpdateMainDepartment(md *models.MainDepartment) error {
+	return s.Repository.UpdateMainDepartment(md)
+}
+
+func (s *Service) DeleteMainDepartment(id uint) error {
+	return s.Repository.DeleteMainDepartment(id)
 }

@@ -26,6 +26,10 @@ func InitDatabase() error {
 	}
 
 	DB.AutoMigrate(&models.User{})
+	DB.AutoMigrate(&models.Kindergarten{})
+	DB.AutoMigrate(&models.KindergartenPicture{})
+	DB.AutoMigrate(&models.EducationMinistry{})
+	DB.AutoMigrate(&models.MainDepartment{})
 
 	return nil
 }
