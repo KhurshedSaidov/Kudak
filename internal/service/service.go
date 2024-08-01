@@ -77,10 +77,35 @@ func (s *Service) GetEducationMinistryByID(id uint) (models.EducationMinistry, e
 }
 
 func (s *Service) UpdateEducationMinistry(em *models.EducationMinistry) error {
+
+	oldEm, err := s.Repository.GetEducationMinistryByID(em.ID)
+	if err != nil {
+		return err
+	}
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(em.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+	em.Password = string(hashedPassword)
+
+	if err := s.Repository.ArchiveEducationMinistry(oldEm); err != nil {
+		return err
+	}
+
 	return s.Repository.UpdateEducationMinistry(em)
 }
 
 func (s *Service) DeleteEducationMinistry(id uint) error {
+	oldEm, err := s.Repository.GetEducationMinistryByID(id)
+	if err != nil {
+		return err
+	}
+
+	if err := s.Repository.ArchiveEducationMinistry(oldEm); err != nil {
+		return err
+	}
+
 	return s.Repository.DeleteEducationMinistry(id)
 }
 
@@ -102,9 +127,32 @@ func (s *Service) GetMainDepartmentByID(id uint) (models.MainDepartment, error) 
 }
 
 func (s *Service) UpdateMainDepartment(md *models.MainDepartment) error {
+	oldMd, err := s.Repository.GetMainDepartmentByID(md.ID)
+	if err != nil {
+		return err
+	}
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(md.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+	md.Password = string(hashedPassword)
+
+	if err := s.Repository.ArchiveMainDepartment(oldMd); err != nil {
+		return err
+	}
 	return s.Repository.UpdateMainDepartment(md)
 }
 
 func (s *Service) DeleteMainDepartment(id uint) error {
+
+	oldMd, err := s.Repository.GetMainDepartmentByID(id)
+	if err != nil {
+		return err
+	}
+
+	if err := s.Repository.ArchiveMainDepartment(oldMd); err != nil {
+		return err
+	}
 	return s.Repository.DeleteMainDepartment(id)
 }

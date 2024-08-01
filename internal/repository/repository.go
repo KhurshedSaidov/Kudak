@@ -71,6 +71,17 @@ func (r *Repository) DeleteEducationMinistry(id uint) error {
 	return r.DB.Delete(&models.EducationMinistry{}, id).Error
 }
 
+func (r *Repository) ArchiveEducationMinistry(oldEm models.EducationMinistry) error {
+	archive := models.EducationMinistryArchive{
+		OriginalID:  oldEm.ID,
+		Name:        oldEm.Name,
+		Password:    oldEm.Password,
+		Inn:         oldEm.Inn,
+		PhoneNumber: oldEm.PhoneNumber,
+	}
+	return r.DB.Create(&archive).Error
+}
+
 func (r *Repository) CreateMainDepartment(md *models.MainDepartment) error {
 	return r.DB.Create(md).Error
 }
@@ -89,6 +100,17 @@ func (r *Repository) GetMainDepartmentByID(id uint) (models.MainDepartment, erro
 
 func (r *Repository) UpdateMainDepartment(md *models.MainDepartment) error {
 	return r.DB.Save(md).Error
+}
+
+func (r *Repository) ArchiveMainDepartment(oldDm models.MainDepartment) error {
+	archive := models.MainDepartmentArchive{
+		OriginalID:  oldDm.ID,
+		Name:        oldDm.Name,
+		Password:    oldDm.Password,
+		Inn:         oldDm.Inn,
+		PhoneNumber: oldDm.PhoneNumber,
+	}
+	return r.DB.Create(&archive).Error
 }
 
 func (r *Repository) DeleteMainDepartment(id uint) error {

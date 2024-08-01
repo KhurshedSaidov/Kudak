@@ -33,12 +33,30 @@ type EducationMinistry struct {
 	PhoneNumber int    `json:"phone_number"`
 }
 
+type EducationMinistryArchive struct {
+	gorm.Model
+	OriginalID  uint   `json:"original_id"`
+	Name        string `json:"name"`
+	Password    string `json:"password"`
+	Inn         int    `json:"inn"`
+	PhoneNumber int    `json:"phoneNumber"`
+}
+
 type MainDepartment struct {
 	gorm.Model
 	Name        string `json:"name"`
 	Password    string `json:"-"`
 	Inn         int    `json:"inn"`
 	PhoneNumber int    `json:"phone_number"`
+}
+
+type MainDepartmentArchive struct {
+	gorm.Model
+	OriginalID  uint   `json:"original_id"`
+	Name        string `json:"name"`
+	Password    string `json:"password"`
+	Inn         int    `json:"inn"`
+	PhoneNumber int    `json:"phoneNumber"`
 }
 
 type Server struct {

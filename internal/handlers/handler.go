@@ -272,7 +272,8 @@ func (h *Handler) UpdateEducationMinistryHandler(w http.ResponseWriter, r *http.
 	}
 
 	if err := h.Service.UpdateEducationMinistry(&em); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		log.Printf("Ошибка обновления записи: %v\n", err)
+		http.Error(w, "Ошибка обновления записи", http.StatusInternalServerError)
 		return
 	}
 
@@ -290,7 +291,8 @@ func (h *Handler) DeleteEducationMinistryHandler(w http.ResponseWriter, r *http.
 	}
 
 	if err := h.Service.DeleteEducationMinistry(uint(id)); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		log.Printf("Ошибка удаления записи: %v\n", err)
+		http.Error(w, "Ошибка удаления записи", http.StatusInternalServerError)
 		return
 	}
 
@@ -354,7 +356,8 @@ func (h *Handler) UpdateMainDepartmentHandler(w http.ResponseWriter, r *http.Req
 	}
 
 	if err := h.Service.UpdateMainDepartment(&md); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		log.Printf("Ошибка обновления записи: %v\n", err)
+		http.Error(w, "Ошибка обновления записи", http.StatusInternalServerError)
 		return
 	}
 
@@ -372,7 +375,8 @@ func (h *Handler) DeleteMainDepartmentHandler(w http.ResponseWriter, r *http.Req
 	}
 
 	if err := h.Service.DeleteMainDepartment(uint(id)); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		log.Printf("Ошибка удаления записи: %v\n", err)
+		http.Error(w, "Ошибка удаления записи", http.StatusInternalServerError)
 		return
 	}
 
