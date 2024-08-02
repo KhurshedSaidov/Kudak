@@ -47,11 +47,11 @@ func (s *Service) Authenticiate(username, password string) (bool, error) {
 	return true, nil
 }
 
-func (s *Service) CreateKindergarten(kindergarten *models.Kindergarten) error {
-	return s.Repository.AddKindergarten(kindergarten)
+func (s *Service) CreateKindergarten(file *models.Kindergarten) error {
+	return s.Repository.CreateKindergarten(file)
 }
 
-func (s *Service) GetAllKindergartens() (models.Kindergarten, error) {
+func (s *Service) GetAllKindergartens() ([]models.Kindergarten, error) {
 	return s.Repository.GetAllKindergartens()
 }
 
@@ -155,4 +155,24 @@ func (s *Service) DeleteMainDepartment(id uint) error {
 		return err
 	}
 	return s.Repository.DeleteMainDepartment(id)
+}
+
+func (s *Service) AddChild(kindergartenID uint, child *models.Child) error {
+	return s.Repository.AddChild(kindergartenID, child)
+}
+
+func (s *Service) RecordAttendance(childID uint, present bool) error {
+	return s.Repository.RecordAttendance(childID, present)
+}
+
+func (s *Service) GetAllChildren() ([]models.Child, error) {
+	return s.Repository.GetAllChildren()
+}
+
+func (s *Service) GetLatestAttendance() ([]models.Attendance, error) {
+	return s.Repository.GetLatestAttendance()
+}
+
+func (s *Service) UpdateAttendance(kindergartenID uint, attendance *models.Attendance) error {
+	return s.Repository.UpdateAttendance(kindergartenID, attendance)
 }

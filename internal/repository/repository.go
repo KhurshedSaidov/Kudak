@@ -2,7 +2,9 @@ package repository
 
 import (
 	"Kudak/models"
+	"fmt"
 	"gorm.io/gorm"
+	"time"
 )
 
 type Repository struct {
@@ -30,23 +32,22 @@ func (r *Repository) GetUserByUsername(username string) (*models.User, error) {
 	return &user, nil
 }
 
-func (r *Repository) AddKindergarten(kindergarten *models.Kindergarten) error {
-	return r.DB.Create(kindergarten).Error
+func (r *Repository) CreateKindergarten(file *models.Kindergarten) error {
+	return r.DB.Create(file).Error
 }
 
-func (r *Repository) GetAllKindergartens() (models.Kindergarten, error) {
-	var kindergartens models.Kindergarten
-	err := r.DB.Select("id", "name", "inn", "address", "number", "description").Find(&kindergartens).Error
-	return kindergartens, err
+func (r *Repository) GetAllKindergartens() ([]models.Kindergarten, error) {
+	var files []models.Kindergarten
+	err := r.DB.Find(&files).Error
+	return files, err
 }
 
 func (r *Repository) GetKindergartenByID(id uint) (models.Kindergarten, error) {
-	var kindergarten models.Kindergarten
-	if err := r.DB.Select("name", "picture").First(&kindergarten, id).Error; err != nil {
-		return kindergarten, err
-	}
-	return kindergarten, nil
+	var file models.Kindergarten
+	err := r.DB.First(&file, id).Error
+	return file, err
 }
+
 func (r *Repository) CreateEducationMinistry(em *models.EducationMinistry) error {
 	return r.DB.Create(em).Error
 }
@@ -115,4 +116,44 @@ func (r *Repository) ArchiveMainDepartment(oldDm models.MainDepartment) error {
 
 func (r *Repository) DeleteMainDepartment(id uint) error {
 	return r.DB.Delete(&models.MainDepartment{}, id).Error
+}
+
+func (r *Repository) AddChild(kindergartenID uint, child *models.Child) error {
+	childTableName := fmt.Sprintf("children_%d", kindergartenID)
+	return r.DB.Table(childTableName).Create(child).Error
+}
+
+func (r *Repository) RecordAttendance(childID uint, present bool) error {
+	attendance := models.Attendance{
+		ChildID:    childID,
+		Present:    present,
+		RecordedAt: time.Now(),
+	}
+
+	return r.DB.Create(&attendance).Error
+}
+
+func (r *Repository) GetAllChildren() ([]models.Child, error) {
+	var children []models.Child
+	err := r.DB.Find(&children).Error
+	return children, err
+}
+
+func (r *Repository) GetLatestAttendance() ([]models.Attendance, error) {
+	var attendances []models.Attendance
+	err := r.DB.Raw(`
+		SELECT a1.*
+		FROM attendances a1
+		INNER JOIN (
+			SELECT child_id, MAX(recorded_at) AS max_date
+			FROM attendances
+			GROUP BY child_id
+		) a2 ON a1.child_id = a2.child_id AND a1.recorded_at = a2.max_date
+	`).Scan(&attendances).Error
+	return attendances, err
+}
+
+func (r *Repository) UpdateAttendance(kindergartenID uint, attendance *models.Attendance) error {
+	attendanceTableName := fmt.Sprintf("attendance_%d", kindergartenID)
+	return r.DB.Table(attendanceTableName).Create(attendance).Error
 }

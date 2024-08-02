@@ -1,6 +1,9 @@
 package models
 
-import "gorm.io/gorm"
+import (
+	"gorm.io/gorm"
+	"time"
+)
 
 type User struct {
 	gorm.Model
@@ -11,19 +14,21 @@ type User struct {
 
 type Kindergarten struct {
 	gorm.Model
-	Name        string                `json:"name"`
-	Inn         int                   `json:"inn"`
-	Address     string                `json:"address"`
-	Number      int                   `json:"number"`
-	Picture     []KindergartenPicture `json:"pictures" gorm:"foreignKey:KindergartenID"`
-	Description string                `json:"description"`
+	Name        string  `json:"name"`
+	Path        string  `json:"path"`
+	Inn         int     `json:"inn"`
+	PhoneNumber string  `json:"phone_number"`
+	Subtitle    string  `json:"subtitle"`
+	Latitude    float64 `json:"latitude"`
+	Longitude   float64 `json:"longitude"`
+	Address     string  `json:"address"`
 }
 
-type KindergartenPicture struct {
-	gorm.Model
-	KindergartenID uint   `json:"kindergarten_id"`
-	PicturePath    string `json:"picture_path"`
-}
+//type KindergartenPicture struct {
+//	gorm.Model
+//	KindergartenID uint   `json:"kindergarten_id"`
+//	PicturePath    string `json:"picture_path"`
+//}
 
 type EducationMinistry struct {
 	gorm.Model
@@ -57,6 +62,30 @@ type MainDepartmentArchive struct {
 	Password    string `json:"password"`
 	Inn         int    `json:"inn"`
 	PhoneNumber int    `json:"phoneNumber"`
+}
+
+type Child struct {
+	gorm.Model
+	FullName   string       `json:"full_name"`
+	BirthDate  time.Time    `json:"birth_date"`
+	Group      string       `json:"group"`
+	Attendance []Attendance `json:"attendance" gorm:"foreignKey:ChildID"`
+}
+
+type Attendance struct {
+	gorm.Model
+	ChildID    uint      `json:"child_id"`
+	Present    bool      `json:"present"`
+	RecordedAt time.Time `json:"recorded_at"`
+}
+
+type UpdateAttendancesRequest struct {
+	Attendance []Attendance `json:"attendance"`
+}
+
+type AttendanceUpdate struct {
+	ChildID uint `json:"child_id"`
+	Present bool `json:"present"`
 }
 
 type Server struct {

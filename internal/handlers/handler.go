@@ -5,17 +5,16 @@ import (
 	"Kudak/models"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
+	"gorm.io/gorm"
 	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strconv"
-	"strings"
+	"time"
 )
 
 func generateRandomString(n int) string {
@@ -83,136 +82,119 @@ func (h *Handler) SignUpHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-func (h *Handler) CreateKindergartenHandler(w http.ResponseWriter, r *http.Request) {
-	var requestData struct {
-		Name        string   `json:"name"`
-		Inn         int      `json:"inn"`
-		Address     string   `json:"address"`
-		Number      int      `json:"number"`
-		Pictures    []string `json:"pictures"`
-		Description string   `json:"description"`
-	}
-
-	if err := json.NewDecoder(r.Body).Decode(&requestData); err != nil {
-		http.Error(w, "Не удалось декодировать JSON. Проверьте правильность формата.", http.StatusBadRequest)
-		log.Printf("Ошибка декодирования JSON: %v", err)
+func (h *Handler) UploadKindergartenHandler(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseMultipartForm(10 << 20)
+	if err != nil {
+		log.Printf("Error parsing form: %v\n", err)
+		http.Error(w, "Unable to parse form", http.StatusBadRequest)
 		return
 	}
 
-	var pictureModels []models.KindergartenPicture
-	for _, base64Image := range requestData.Pictures {
-		imageData, err := base64.StdEncoding.DecodeString(base64Image)
-		if err != nil {
-			http.Error(w, "Не удалось декодировать изображение. Проверьте правильность формата base64.", http.StatusBadRequest)
-			log.Printf("Ошибка декодирования base64: %v", err)
-			return
-		}
+	file, handler, err := r.FormFile("picture")
+	if err != nil {
+		log.Printf("Error getting the file: %v\n", err)
+		http.Error(w, "Unable to get the file", http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
 
-		filename := filepath.Join("uploads", "kindergarten_"+generateRandomString(10)+".jpg")
-		if err := ioutil.WriteFile(filename, imageData, 0644); err != nil {
-			http.Error(w, "Failed to save image", http.StatusInternalServerError)
-			return
-		}
+	filePath := fmt.Sprintf("uploads/%d-%s", time.Now().Unix(), handler.Filename)
+	out, err := os.Create(filePath)
+	if err != nil {
+		log.Printf("Error creating the file: %v\n", err)
+		http.Error(w, "Unable to create the file", http.StatusInternalServerError)
+		return
+	}
+	defer out.Close()
 
-		pictureModels = append(pictureModels, models.KindergartenPicture{PicturePath: filename})
+	fileBytes, err := ioutil.ReadAll(file)
+	if err != nil {
+		log.Printf("Error reading the file: %v\n", err)
+		http.Error(w, "Unable to read the file", http.StatusInternalServerError)
+		return
 	}
 
-	kindergarten := &models.Kindergarten{
-		Name:        requestData.Name,
-		Inn:         requestData.Inn,
-		Address:     requestData.Address,
-		Number:      requestData.Number,
-		Picture:     pictureModels,
-		Description: requestData.Description,
+	_, err = out.Write(fileBytes)
+	if err != nil {
+		log.Printf("Error writing the file: %v\n", err)
+		http.Error(w, "Unable to write the file", http.StatusInternalServerError)
+		return
 	}
 
-	if err := h.Service.CreateKindergarten(kindergarten); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	name := r.FormValue("name")
+	inn, _ := strconv.Atoi(r.FormValue("inn"))
+	phoneNumber := r.FormValue("phoneNumber")
+	subtitle := r.FormValue("subtitle")
+	latitude, _ := strconv.ParseFloat(r.FormValue("latitude"), 64)
+	longitude, _ := strconv.ParseFloat(r.FormValue("longitude"), 64)
+	address := r.FormValue("address")
+
+	fileRecord := models.Kindergarten{
+		Name:        name,
+		Path:        filePath,
+		Inn:         inn,
+		PhoneNumber: phoneNumber,
+		Subtitle:    subtitle,
+		Latitude:    latitude,
+		Longitude:   longitude,
+		Address:     address,
+	}
+
+	if err := h.Service.CreateKindergarten(&fileRecord); err != nil {
+		log.Printf("Error saving file to database: %v\n", err)
+		http.Error(w, "Unable to save the file in database", http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(kindergarten)
+	json.NewEncoder(w).Encode(fileRecord)
 }
-
-func decodeBase64Image(base64Str, filePath string) error {
-	// Удаляем префикс data URL, если он есть
-	if strings.HasPrefix(base64Str, "data:image/") {
-		parts := strings.SplitN(base64Str, ",", 2)
-		if len(parts) != 2 {
-			return errors.New("некорректный формат base64 строки")
-		}
-		base64Str = parts[1]
-	}
-
-	// Декодируем строку base64
-	data, err := base64.StdEncoding.DecodeString(base64Str)
+func (h *Handler) GetAllKindergartens(w http.ResponseWriter, r *http.Request) {
+	files, err := h.Service.GetAllKindergartens()
 	if err != nil {
-		return fmt.Errorf("ошибка декодирования base64: %v", err)
-	}
-
-	// Сохраняем изображение в файл
-	file, err := os.Create(filePath)
-	if err != nil {
-		return fmt.Errorf("ошибка создания файла: %v", err)
-	}
-	defer file.Close()
-
-	_, err = file.Write(data)
-	if err != nil {
-		return fmt.Errorf("ошибка записи файла: %v", err)
-	}
-
-	return nil
-}
-
-func (h *Handler) GetAllKindergartensHandler(w http.ResponseWriter, r *http.Request) {
-	kindergartens, err := h.Service.GetAllKindergartens()
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Ошибка при получении данных"))
+		log.Printf("Error fetching files: %v\n", err)
+		http.Error(w, "Unable to fetch files", http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	response := map[string]interface{}{
-		"name":        kindergartens.Name,
-		"inn":         kindergartens.Inn,
-		"address":     kindergartens.Address,
-		"number":      kindergartens.Number,
-		"description": kindergartens.Description,
-	}
-	json.NewEncoder(w).Encode(response)
+	json.NewEncoder(w).Encode(files)
 }
 
 func (h *Handler) GetKindergartenByIDHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	idStr, ok := vars["id"]
-	if !ok {
-		http.Error(w, "Не указан id в URL параметрах", http.StatusBadRequest)
-		log.Println("Не указан id в URL параметрах")
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		log.Printf("Invalid ID: %v\n", err)
+		http.Error(w, "Invalid ID", http.StatusBadRequest)
 		return
 	}
 
-	id, err := strconv.ParseUint(idStr, 10, 32)
+	file, err := h.Service.GetKindergartenByID(uint(id))
 	if err != nil {
-		http.Error(w, "Некорректный id", http.StatusBadRequest)
-		log.Printf("Некорректный id: %v\n", err)
+		if err == gorm.ErrRecordNotFound {
+			http.Error(w, "File not found", http.StatusNotFound)
+		} else {
+			log.Printf("Error fetching file: %v\n", err)
+			http.Error(w, "Unable to fetch file", http.StatusInternalServerError)
+		}
 		return
 	}
 
-	kindergarten, err := h.Service.GetKindergartenByID(uint(id))
+	fileData, err := ioutil.ReadFile(file.Path)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Ошибка при получении данных"))
+		log.Printf("Error reading file: %v\n", err)
+		http.Error(w, "Unable to read file", http.StatusInternalServerError)
 		return
+	}
+
+	fileBase64 := base64.StdEncoding.EncodeToString(fileData)
+	response := map[string]interface{}{
+		"file":    file,
+		"picture": fileBase64,
 	}
 
 	w.WriteHeader(http.StatusOK)
-	response := map[string]interface{}{
-		"name":    kindergarten.Name,
-		"picture": kindergarten.Picture,
-	}
 	json.NewEncoder(w).Encode(response)
 }
 
@@ -383,3 +365,74 @@ func (h *Handler) DeleteMainDepartmentHandler(w http.ResponseWriter, r *http.Req
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"message": "MainDepartment deleted successfully"})
 }
+
+//
+//func (h *Handler) CreateChildHandler(w http.ResponseWriter, r *http.Request) {
+//	var child models.Child
+//	if err := json.NewDecoder(r.Body).Decode(&child); err != nil {
+//		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+//		return
+//	}
+//
+//	if err := h.Service.CreateChild(&child); err != nil {
+//		http.Error(w, "Failed to create child", http.StatusInternalServerError)
+//		return
+//	}
+//
+//	w.WriteHeader(http.StatusCreated)
+//	json.NewEncoder(w).Encode(map[string]interface{}{
+//		"message": "Child created successfully",
+//		"child":   child,
+//	})
+//}
+//
+//func (h *Handler) UpdateAttendancesHandler(w http.ResponseWriter, r *http.Request) {
+//	var updateRequest struct {
+//		Attendances []models.AttendanceUpdate `json:"attendances"`
+//	}
+//
+//	if err := json.NewDecoder(r.Body).Decode(&updateRequest); err != nil {
+//		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+//		return
+//	}
+//
+//	if err := h.Service.UpdateMultipleAttendances(updateRequest.Attendances); err != nil {
+//		http.Error(w, "Failed to update attendances", http.StatusInternalServerError)
+//		return
+//	}
+//
+//	w.WriteHeader(http.StatusOK)
+//	json.NewEncoder(w).Encode(map[string]string{"message": "Attendances updated successfully"})
+//}
+//
+//func (h *Handler) GetAllChildrenHandler(w http.ResponseWriter, r *http.Request) {
+//	children, err := h.Service.GetAllChildren()
+//	if err != nil {
+//		http.Error(w, "Failed to get children", http.StatusInternalServerError)
+//		return
+//	}
+//
+//	response := make([]map[string]interface{}, len(children))
+//	for i, child := range children {
+//		response[i] = map[string]interface{}{
+//			"id":         child.ID,
+//			"full_name":  child.FullName,
+//			"birth_date": child.BirthDate,
+//			"group":      child.Group,
+//		}
+//	}
+//
+//	w.WriteHeader(http.StatusOK)
+//	json.NewEncoder(w).Encode(response)
+//}
+//
+//func (h *Handler) GetLatestAttendanceHandler(w http.ResponseWriter, r *http.Request) {
+//	attendances, err := h.Service.GetLatestAttendance()
+//	if err != nil {
+//		http.Error(w, "Failed to get attendance", http.StatusInternalServerError)
+//		return
+//	}
+//
+//	w.WriteHeader(http.StatusOK)
+//	json.NewEncoder(w).Encode(attendances)
+//}

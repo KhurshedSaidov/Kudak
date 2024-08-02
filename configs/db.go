@@ -27,11 +27,11 @@ func InitDatabase() error {
 
 	DB.AutoMigrate(&models.User{})
 	DB.AutoMigrate(&models.Kindergarten{})
-	DB.AutoMigrate(&models.KindergartenPicture{})
 	DB.AutoMigrate(&models.EducationMinistry{})
 	DB.AutoMigrate(&models.MainDepartment{})
 	DB.AutoMigrate(&models.EducationMinistryArchive{})
 	DB.AutoMigrate(&models.MainDepartmentArchive{})
-
+	DB.AutoMigrate(&models.Child{})
+	DB.AutoMigrate(&models.Attendance{})
 	return nil
 }
