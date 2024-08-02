@@ -15,7 +15,9 @@ func InitRouters(handler *handlers.Handler) *mux.Router {
 
 	r.HandleFunc("/upload", handler.UploadKindergartenHandler).Methods("POST")
 	r.HandleFunc("/files", handler.GetAllKindergartens).Methods("GET")
+	r.HandleFunc("/basic-files", handler.GetKindergartenBasicInfo).Methods("GET")
 	r.HandleFunc("/files/{id}", handler.GetKindergartenByIDHandler).Methods("GET")
+	r.HandleFunc("/files/{id}", handler.DeleteKindergartenByID).Methods("DELETE")
 	r.PathPrefix("/uploads/").Handler(http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads"))))
 
 	r.HandleFunc("/education-ministry", handler.CreateEducationMinistryHandler).Methods("POST")

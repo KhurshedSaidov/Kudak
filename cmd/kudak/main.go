@@ -8,6 +8,7 @@ import (
 	"github.com/rs/cors"
 	"log"
 	"net/http"
+	"os"
 )
 
 func main() {
@@ -33,6 +34,13 @@ func Run() error {
 
 	if err != nil {
 		return err
+	}
+
+	if _, err := os.Stat("uploads"); os.IsNotExist(err) {
+		err = os.Mkdir("uploads", os.ModePerm)
+		if err != nil {
+			log.Fatalf("Error creating uploads directory: %v", err)
+		}
 	}
 
 	c := cors.New(cors.Options{

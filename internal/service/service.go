@@ -59,6 +59,10 @@ func (s *Service) GetKindergartenByID(id uint) (models.Kindergarten, error) {
 	return s.Repository.GetKindergartenByID(id)
 }
 
+func (s *Service) DeleteKindergartenByID(id uint) error {
+	return s.Repository.DeleteKindergartenByID(id)
+}
+
 func (s *Service) CreateEducationMinistry(em *models.EducationMinistry) error {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(em.Password), bcrypt.DefaultCost)
 	if err != nil {

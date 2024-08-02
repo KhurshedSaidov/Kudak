@@ -48,6 +48,10 @@ func (r *Repository) GetKindergartenByID(id uint) (models.Kindergarten, error) {
 	return file, err
 }
 
+func (r *Repository) DeleteKindergartenByID(id uint) error {
+	return r.DB.Delete(&models.Kindergarten{}, id).Error
+}
+
 func (r *Repository) CreateEducationMinistry(em *models.EducationMinistry) error {
 	return r.DB.Create(em).Error
 }

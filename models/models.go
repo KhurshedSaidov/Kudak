@@ -13,7 +13,8 @@ type User struct {
 }
 
 type Kindergarten struct {
-	gorm.Model
+	ID          uint `gorm:"primarykey"`
+	CreatedAt   time.Time
 	Name        string  `json:"name"`
 	Path        string  `json:"path"`
 	Inn         int     `json:"inn"`
@@ -22,6 +23,25 @@ type Kindergarten struct {
 	Latitude    float64 `json:"latitude"`
 	Longitude   float64 `json:"longitude"`
 	Address     string  `json:"address"`
+}
+
+type KindergartenResponse struct {
+	ID        uint `gorm:"primarykey"`
+	CreatedAt time.Time
+	Name      string  `json:"name"`
+	Inn       int     `json:"inn"`
+	Address   string  `json:"address"`
+	Number    string  `json:"number"`
+	Subtitle  string  `json:"subtitle"`
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
+}
+
+type KindergartenBasicInfoResponse struct {
+	ID        uint    `gorm:"primarykey"`
+	Name      string  `json:"name"`
+	Longitude float64 `json:"longitude"`
+	Latitude  float64 `json:"latitude"`
 }
 
 //type KindergartenPicture struct {

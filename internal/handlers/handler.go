@@ -150,15 +150,52 @@ func (h *Handler) UploadKindergartenHandler(w http.ResponseWriter, r *http.Reque
 	json.NewEncoder(w).Encode(fileRecord)
 }
 func (h *Handler) GetAllKindergartens(w http.ResponseWriter, r *http.Request) {
-	files, err := h.Service.GetAllKindergartens()
+	kindergartens, err := h.Service.GetAllKindergartens()
 	if err != nil {
-		log.Printf("Error fetching files: %v\n", err)
-		http.Error(w, "Unable to fetch files", http.StatusInternalServerError)
+		log.Printf("Error fetching kindergartens: %v\n", err)
+		http.Error(w, "Unable to fetch kindergartens", http.StatusInternalServerError)
 		return
 	}
 
+	var response []models.KindergartenResponse
+	for _, k := range kindergartens {
+		response = append(response, models.KindergartenResponse{
+			ID:        k.ID,
+			Name:      k.Name,
+			Inn:       k.Inn,
+			Address:   k.Address,
+			Number:    k.PhoneNumber,
+			CreatedAt: k.CreatedAt,
+			Subtitle:  k.Subtitle,
+			Latitude:  k.Latitude,
+			Longitude: k.Longitude,
+		})
+	}
+
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(files)
+	json.NewEncoder(w).Encode(response)
+}
+
+func (h *Handler) GetKindergartenBasicInfo(w http.ResponseWriter, r *http.Request) {
+	kindergartens, err := h.Service.GetAllKindergartens()
+	if err != nil {
+		log.Printf("Error fetching kindergartens: %v\n", err)
+		http.Error(w, "Unable to fetch kindergartens", http.StatusInternalServerError)
+		return
+	}
+
+	var response []models.KindergartenBasicInfoResponse
+	for _, k := range kindergartens {
+		response = append(response, models.KindergartenBasicInfoResponse{
+			ID:        k.ID,
+			Name:      k.Name,
+			Longitude: k.Longitude,
+			Latitude:  k.Latitude,
+		})
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
 }
 
 func (h *Handler) GetKindergartenByIDHandler(w http.ResponseWriter, r *http.Request) {
@@ -192,6 +229,50 @@ func (h *Handler) GetKindergartenByIDHandler(w http.ResponseWriter, r *http.Requ
 	response := map[string]interface{}{
 		"file":    file,
 		"picture": fileBase64,
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
+
+func (h *Handler) DeleteKindergartenByID(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		log.Printf("Invalid ID: %v\n", err)
+		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		return
+	}
+
+	// Получаем информацию о файле
+	file, err := h.Service.GetKindergartenByID(uint(id))
+	if err != nil {
+		http.Error(w, "Failed to fetch data from database", http.StatusInternalServerError)
+		return
+	}
+
+	if file.Inn == 0 {
+		http.Error(w, "Record not found", http.StatusNotFound)
+		return
+	}
+
+	// Удаляем файл из файловой системы
+	err = os.Remove(file.Path)
+	if err != nil {
+		http.Error(w, "Failed to delete file", http.StatusInternalServerError)
+		return
+	}
+
+	// Удаляем запись из базы данных
+	err = h.Service.DeleteKindergartenByID(uint(id))
+	if err != nil {
+		http.Error(w, "Failed to delete record from database", http.StatusInternalServerError)
+		return
+	}
+
+	response := map[string]interface{}{
+		"success": true,
+		"message": "File deleted successfully",
 	}
 
 	w.WriteHeader(http.StatusOK)
